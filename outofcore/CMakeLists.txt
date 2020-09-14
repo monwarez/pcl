@@ -1,6 +1,10 @@
 set(SUBSYS_NAME outofcore)
 set(SUBSYS_DESC "Point cloud outofcore library")
-set(SUBSYS_DEPS common io filters octree visualization)
+if(WITH_VTK)
+    set(SUBSYS_DEPS common io filters octree visualization)
+else()
+    set(SUBSYS_DEPS common io filters octree geometry kdtree)
+endif()
 
 set(build TRUE)
 PCL_SUBSYS_OPTION(build "${SUBSYS_NAME}" "${SUBSYS_DESC}" ON)
@@ -61,15 +65,21 @@ set(visualization_incs
 set(LIB_NAME "pcl_${SUBSYS_NAME}")
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-PCL_ADD_LIBRARY(${LIB_NAME} COMPONENT ${SUBSYS_NAME} SOURCES ${srcs} ${incs} ${impl_incs} ${visualization_incs})
-#PCL_ADD_SSE_FLAGS("${LIB_NAME}")
-target_link_libraries("${LIB_NAME}" pcl_common pcl_visualization ${Boost_SYSTEM_LIBRARY})
+if(WITH_VTK)
+    PCL_ADD_LIBRARY(${LIB_NAME} COMPONENT ${SUBSYS_NAME} SOURCES ${srcs} ${incs} ${impl_incs} ${visualization_incs})
+    target_link_libraries("${LIB_NAME}" pcl_common pcl_visualization ${Boost_SYSTEM_LIBRARY})
+else()
+    PCL_ADD_LIBRARY(${LIB_NAME} COMPONENT ${SUBSYS_NAME} SOURCES ${srcs} ${incs} ${impl_incs})
+    target_link_libraries("${LIB_NAME}" pcl_common  ${Boost_SYSTEM_LIBRARY})
+endif()
 PCL_MAKE_PKGCONFIG(${LIB_NAME} COMPONENT ${SUBSYS_NAME} DESC ${SUBSYS_DESC} PCL_DEPS ${SUBSYS_DEPS})
 
 # Install include files
 PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}" ${incs})
 PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}/impl" ${impl_incs})
-PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}/visualization" ${visualization_incs})
+if(WITH_VTK)
+    PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}/visualization" ${visualization_incs})
+endif()
 
 if(BUILD_tools)
   add_subdirectory(tools)
